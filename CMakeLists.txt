@@ -18,6 +18,7 @@ set(TIFFWRAP_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 set(TIFFWRAP_CFG_DIR ${PROJECT_SOURCE_DIR}/config)
 
 option(TIFFWRAP_BUILD_SHARED_LIBS "build tiffwrap as a shared library" ON)
+option(TIFFWRAP_BUILD_UNIT_TESTS "build unit tests of tiffwrap" ON)
 
 if(TIFFWRAP_BUILD_SHARED_LIBS)
     add_library(tiffwrap SHARED)
@@ -73,6 +74,12 @@ target_include_directories(
 
 add_subdirectory(src)
 add_subdirectory(include)
+
+include(CTest)
+if(TIFFWRAP_BUILD_UNIT_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
 
 install(
     TARGETS tiffwrap
