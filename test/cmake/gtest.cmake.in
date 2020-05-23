@@ -1,0 +1,36 @@
+find_package(Threads REQUIRED)
+
+include(ExternalProject)
+
+externalproject_add(
+    googletest
+    URL https://github.com/google/googletest/archive/release-1.10.0.zip
+    PREFIX ${PROJECT_BINARY_DIR}/googletest
+    UPDATE_COMMAND  ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD  ON
+    LOG_CONFIGURE ON
+    LOG_BUILD     ON
+)
+
+externalproject_get_property(googletest source_dir)
+set(GTEST_INC_DIR ${source_dir}/googletest/include)
+set(GMOCK_INC_DIR ${source_dir}/googlemock/include)
+
+externalproject_get_property(googletest binary_dir)
+
+add_library(gtest::gtest UNKNOWN IMPORTED)
+set_target_properties(
+    gtest::gtest PROPERTIES
+    IMPORTED_LOCATION ${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a
+    IMPORTED_LINK_INTERFACE_LIBRARIES Threads::Threads
+)
+add_dependencies(gtest::gtest googletest)
+
+add_library(gtest::gtest_main UNKNOWN IMPORTED)
+set_target_properties(
+    gtest::gtest_main PROPERTIES
+    IMPORTED_LOCATION ${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a
+    IMPORTED_LINK_INTERFACE_LIBRARIES Threads::Threads
+)
+add_dependencies(gtest::gtest_main googletest)

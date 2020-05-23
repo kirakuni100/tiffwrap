@@ -1,24 +1,18 @@
 cmake_minimum_required(VERSION 3.8)
 
-add_library(doctest_main OBJECT src/doctest_main.cc)
+include(cmake/gtest.cmake.in)
 
-set_target_properties(
-    doctest_main PROPERTIES
-    CXX_STANDARD 17
-    CXX_EXTENSIONS OFF
+add_executable(sample_test src/sample_test.cc)
+
+find_package(TIFF REQUIRED)
+
+target_link_libraries(
+    sample_test
+    tiffwrap::tiffwrap
+    ${TIFF_LIBRARIES}
+    gtest::gtest
+    gtest::gtest_main
 )
-
-target_compile_features(
-    doctest_main PRIVATE
-    cxx_std_11
-)
-
-target_include_directories(
-    doctest_main PRIVATE
-    thirdparty/doctest
-)
-
-add_executable(sample_test $<TARGET_OBJECTS:doctest_main> src/sample_test.cc)
 
 set_target_properties(
     sample_test PROPERTIES
@@ -53,7 +47,8 @@ target_compile_definitions(
 target_include_directories(
     sample_test PRIVATE
     ${TIFFWRAP_INC_DIR}
-    thirdparty/doctest
+    ${GTEST_INC_DIR}
+    ${GMOCK_INC_DIR}
 )
 
 add_test(
