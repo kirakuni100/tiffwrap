@@ -127,7 +127,7 @@ class TiffWrap {
  protected:
      int check_params();
 
- protected:
+ private:
     struct TiffTagField {
         uint32_t subfiletype;
         uint32_t image_width;
