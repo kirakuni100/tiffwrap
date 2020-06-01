@@ -9,6 +9,11 @@ set(tests
     src/test_constructor.cc
 )
 
+option(TIFFWRAP_TEST_WITH_SANITIZER "Building test suite with sanitizer" OFF)
+if(TIFFWRAP_TEST_WITH_SANITIZER)
+    message(STATUS "Building test suite with sanitizer")
+endif()
+
 option(TIFFWRAP_TEST_WITH_VALGRIND "Execute test suite with Valgrind" OFF)
 if(TIFFWRAP_TEST_WITH_VALGRIND)
     find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)

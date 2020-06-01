@@ -1,0 +1,2 @@
+set(CMAKE_C_COMPILER gcc CACHE STRING "gcc compiler" FORCE)
+set(CMAKE_CXX_COMPILER g++ CACHE STRING "g++ compiler" FORCE)

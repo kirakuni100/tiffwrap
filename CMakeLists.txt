@@ -44,16 +44,21 @@ target_compile_features(
 
 target_compile_options(
     tiffwrap PRIVATE
-    -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wconversion
+    $<$<CXX_COMPILER_ID:Clang>:
+    -Wall -Weverything
+    -Wno-c++98-compat -Wno-c++98-compat-pedantic>
+    $<$<CXX_COMPILER_ID:GNU>:
+    -Wall -Wextra -pedantic
+    -Wcast-align -Wcast-qual -Wconversion
     -Wdisabled-optimization -Wendif-labels -Wfloat-equal
     -Winit-self -Winline -Wlogical-op -Wmissing-include-dirs
     -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual
     -Wpacked -Wpointer-arith -Wredundant-decls -Wshadow
     -Wswitch-default -Wswitch-enum -Wunsafe-loop-optimizations
-    -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers
+    -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers>
     $<$<CONFIG:Release>: -O2>
-    $<$<CONFIG:Debug>: -O0 -g>
-    $<$<CONFIG:RElWithDebgInfo>: -O2 -g>
+    $<$<CONFIG:Debug>: -O0 -g3>
+    $<$<CONFIG:RElWithDebgInfo>: -O2 -g3>
 )
 
 target_compile_definitions(
