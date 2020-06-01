@@ -1,10 +1,6 @@
 # include
 include/tiffwrap_config.h
 
-# doctest
-test/thirdparty/doctest/*
-!test/thirdparty/doctest/LICENSE.txt
-!test/thirdparty/doctest/doctest.h
-
 # others
 build/*
+sample/build/*

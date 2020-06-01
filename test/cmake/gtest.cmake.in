@@ -27,10 +27,39 @@ set_target_properties(
 )
 add_dependencies(gtest::gtest googletest)
 
-add_library(gtest::gtest_main UNKNOWN IMPORTED)
-set_target_properties(
-    gtest::gtest_main PROPERTIES
-    IMPORTED_LOCATION ${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a
-    IMPORTED_LINK_INTERFACE_LIBRARIES Threads::Threads
-)
-add_dependencies(gtest::gtest_main googletest)
+option(TIFFWRAP_USE_ORIGINAL_GTEST_MAIN "use original gtest_main of googletest" OFF)
+
+if(TIFFWRAP_USE_ORIGINAL_GTEST_MAIN)
+    add_library(gtest::gtest_main UNKNOWN IMPORTED)
+    set_target_properties(
+        gtest::gtest_main PROPERTIES
+        IMPORTED_LOCATION ${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a
+        IMPORTED_LINK_INTERFACE_LIBRARIES Threads::Threads
+    )
+    add_dependencies(gtest::gtest_main googletest)
+else()
+    add_library(gtest_main STATIC)
+    add_library(gtest::gtest_main ALIAS gtest_main)
+    target_sources(
+        gtest_main PRIVATE
+        src/gtest_main.cc
+    )
+    target_link_libraries(
+        gtest_main PRIVATE
+        Threads::Threads
+    )
+    set_target_properties(
+        gtest_main PROPERTIES
+        CXX_STANDARD 17
+        CXX_EXTENSIONS OFF
+    )
+    target_compile_features(
+        gtest_main PRIVATE
+        cxx_std_11
+    )
+    target_include_directories(
+        gtest_main PRIVATE
+        ${GTEST_INC_DIR}
+    )
+    add_dependencies(gtest_main googletest)
+endif()

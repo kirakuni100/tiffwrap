@@ -9,6 +9,14 @@ set(tests
     src/test_constructor.cc
 )
 
+option(TIFFWRAP_TEST_WITH_VALGRIND "Execute test suite with Valgrind" OFF)
+if(TIFFWRAP_TEST_WITH_VALGRIND)
+    find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
+    message(STATUS "Executing test suite with Valgrind")
+    set(MEMCHECK_COMMAND "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
+    separate_arguments(MEMCHECK_COMMAND)
+endif()
+
 foreach(test ${tests})
     get_filename_component(testcase ${test} NAME_WE)
     add_executable(${testcase} ${test})
@@ -63,7 +71,15 @@ foreach(test ${tests})
         COMMAND $<TARGET_FILE:${testcase}>
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     )
-
     set_tests_properties(${testcase} PROPERTIES LABELS all)
+
+    if(TIFFWRAP_TEST_WITH_VALGRIND)
+        add_test(
+            NAME ${testcase}_valgrind
+            COMMAND ${MEMCHECK_COMMAND} $<TARGET_FILE:${testcase}>
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        )
+        set_tests_properties(${testcase}_valgrind PROPERTIES LABELS valgrind)
+    endif()
 endforeach()
 
