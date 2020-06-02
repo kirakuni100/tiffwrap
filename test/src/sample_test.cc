@@ -1,6 +1,6 @@
 #include <vector>
-#include "gtest/gtest.h"
 #include "tiffwrap.h"
+#include "tiffwrap_test.h"
 
 int factorial(int number) { return number <= 1 ? number : factorial(number - 1) * number; }
 

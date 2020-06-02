@@ -47,8 +47,8 @@
  * OF THIS SOFTWARE.
  */
 
-#ifndef _TIFFWRAP_H_
-#define _TIFFWRAP_H_
+#ifndef INCLUDE_TIFFWRAP_H
+#define INCLUDE_TIFFWRAP_H
 
 #include <cstdint>
 #include <string>
@@ -271,4 +271,4 @@ inline uint16_t TiffWrap::get_chroma_sampling_yfactor() const
 
 }  // namespace tiffwrap
 
-#endif  // _TIFFWRAP_H_
+#endif  // INCLUDE_TIFFWRAP_H

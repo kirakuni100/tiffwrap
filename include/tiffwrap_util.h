@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TIFFWRAP_UTIL_H_
-#define _TIFFWRAP_UTIL_H_
+#ifndef INCLUDE_TIFFWRAP_UTIL_H
+#define INCLUDE_TIFFWRAP_UTIL_H
 
 #include <tuple>
 #include <vector>
@@ -31,7 +31,7 @@
 
 namespace tiffwrap {
 
-size_t get_yuv_size(const TiffWrap &tif);
+size_t get_packed_yuv_size(const TiffWrap &tif);
 
 template<typename T>
 std::vector<T> pack_yuv(
@@ -47,4 +47,4 @@ std::tuple<std::vector<T>, std::vector<T>, std::vector<T>> split_packed_yuv(
 
 }  // namespace tiffwrap
 
-#endif  // _TIFFWRAP_UTIL_H_
+#endif  // INCLUDE_TIFFWRAP_UTIL_H

@@ -45,10 +45,10 @@ target_compile_features(
 target_compile_options(
     tiffwrap PRIVATE
     $<$<CXX_COMPILER_ID:Clang>:
-    -Wall -Weverything
+    -Werror -Wall -Weverything
     -Wno-c++98-compat -Wno-c++98-compat-pedantic>
     $<$<CXX_COMPILER_ID:GNU>:
-    -Wall -Wextra -pedantic
+    -Werror -Wall -Wextra -pedantic
     -Wcast-align -Wcast-qual -Wconversion
     -Wdisabled-optimization -Wendif-labels -Wfloat-equal
     -Winit-self -Winline -Wlogical-op -Wmissing-include-dirs

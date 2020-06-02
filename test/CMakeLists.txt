@@ -4,9 +4,11 @@ include(cmake/gtest.cmake.in)
 
 find_package(TIFF REQUIRED)
 
+set(TIFFWRAP_TEST_DIR ${PROJECT_SOURCE_DIR}/test)
+
 set(tests
-    src/sample_test.cc
-    src/test_constructor.cc
+    ${TIFFWRAP_TEST_DIR}/src/sample_test.cc
+    ${TIFFWRAP_TEST_DIR}/src/test_constructor.cc
 )
 
 option(TIFFWRAP_TEST_WITH_SANITIZER "Building test suite with sanitizer" OFF)
@@ -34,6 +36,11 @@ foreach(test ${tests})
         gtest::gtest_main
     )
 
+    target_include_directories(
+        ${testcase} PRIVATE
+        $<BUILD_INTERFACE:${TIFFWRAP_TEST_DIR}/include>
+    )
+
     set_target_properties(
         ${testcase} PROPERTIES
         CXX_STANDARD 17
@@ -47,13 +54,18 @@ foreach(test ${tests})
 
     target_compile_options(
         ${testcase} PRIVATE
-        -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wconversion
+        $<$<CXX_COMPILER_ID:Clang>:
+        -Wall -Weverything
+        -Wno-c++98-compat -Wno-c++98-compat-pedantic>
+        $<$<CXX_COMPILER_ID:GNU>:
+        -Wall -Wextra -pedantic
+        -Wcast-align -Wcast-qual -Wconversion
         -Wdisabled-optimization -Wendif-labels -Wfloat-equal
         -Winit-self -Winline -Wlogical-op -Wmissing-include-dirs
         -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual
         -Wpacked -Wpointer-arith -Wredundant-decls -Wshadow
         -Wswitch-default -Wswitch-enum -Wunsafe-loop-optimizations
-        -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers
+        -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers>
         $<$<CONFIG:Release>: -O2>
         $<$<CONFIG:Debug>: -O0 -g>
         $<$<CONFIG:RElWithDebgInfo>: -O2 -g>

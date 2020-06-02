@@ -64,9 +64,7 @@ TiffWrap::TiffWrap() :
     m_plane(Plane::PACKED),
     m_subsampling(YUVSubSampling::YUV444),
     m_field({ 0, 0, 0, 0, 0, 0, 1, { 1, 1 }, 0 })
-{
-    ;
-}
+{}
 
 TiffWrap::~TiffWrap()
 {
@@ -83,9 +81,7 @@ TiffWrap::TiffWrap(const TiffWrap &rhs) :
     m_plane(rhs.m_plane),
     m_subsampling(rhs.m_subsampling),
     m_field(rhs.m_field)
-{
-    ;
-}
+{}
 
 TiffWrap &TiffWrap::operator=(const TiffWrap &rhs)
 {
@@ -361,7 +357,7 @@ template<typename T>
 int TiffWrap::write(T *p_data, uint16_t comp)
 {
     auto ret = m_tiff == nullptr ? -1 : 0;
-    auto rows_per_strip = 0;
+    auto rows_per_strip = 0u;
 
     if (ret == 0) {
         if (!TIFFGetFieldDefaulted(m_tiff, TIFFTAG_ROWSPERSTRIP, &rows_per_strip)) {
@@ -390,7 +386,7 @@ int TiffWrap::write(T *p_data, uint16_t comp)
                     break;
                 }
                 ret += static_cast<int>(rsize);
-                p_data += rsize / sizeof(T);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
             }
         } else {
             const auto xsize = m_xsize;
@@ -408,7 +404,7 @@ int TiffWrap::write(T *p_data, uint16_t comp)
                     break;
                 }
                 ret += static_cast<int>(rsize);
-                p_data += rsize / sizeof(T);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
             }
         }
     }
@@ -423,7 +419,7 @@ template<typename T>
 int TiffWrap::read(T *p_data, uint16_t comp)
 {
     auto ret = m_tiff == nullptr ? -1 : 0;
-    auto rows_per_strip = 0;
+    auto rows_per_strip = 0u;
 
     if (ret == 0) {
         if (!TIFFGetFieldDefaulted(m_tiff, TIFFTAG_ROWSPERSTRIP, &rows_per_strip)) {
@@ -452,7 +448,7 @@ int TiffWrap::read(T *p_data, uint16_t comp)
                     break;
                 }
                 ret += static_cast<int>(rsize);
-                p_data += rsize / sizeof(T);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
             }
         } else {
             const auto xsize = m_xsize;
@@ -470,7 +466,7 @@ int TiffWrap::read(T *p_data, uint16_t comp)
                     break;
                 }
                 ret += static_cast<int>(rsize);
-                p_data += rsize / sizeof(T);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
             }
         }
     }
