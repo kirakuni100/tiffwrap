@@ -28,7 +28,7 @@ if(TIFFWRAP_BUILD_WITH_SANITIZER)
 endif()
 
 option(TIFFWRAP_BUILD_SHARED_LIBS "build tiffwrap as a shared library" ON)
-option(TIFFWRAP_BUILD_UNIT_TESTS "build unit tests of tiffwrap" ON)
+option(TIFFWRAP_BUILD_UNIT_TESTS "build unit tests of tiffwrap" OFF)
 
 if(TIFFWRAP_BUILD_SHARED_LIBS)
     add_library(tiffwrap SHARED)
