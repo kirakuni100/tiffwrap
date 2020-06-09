@@ -1,5 +1,7 @@
 .PHONY: all clean clang_tidy clang_analyze coverage cppcheck cpplint doc test
 
+DATE=$(shell date '+%Y%m%d-%H%M%S')
+
 all:
 	@echo "clean - remove built files"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
@@ -11,7 +13,7 @@ all:
 	@echo "test - compile and execute test suite"
 
 clean:
-	\rm -rf build_coverage build_test
+	\rm -rf build_coverage build_test cppcheck cpplint
 
 clang_tidy:
 	@echo "test"
@@ -27,12 +29,16 @@ coverage:
 	cd build_coverage ; make lcov_html
 
 cppcheck:
-	mkdir -p cppcheck
-	cd cppcheck ; cppcheck --language=c++ --std=c++17 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction -I ../include ../include/*.h ../src/*.cc 2>&1 | tee cppcheck.log
+	mkdir -p cppcheck/${DATE}
+	\cp -r include cppcheck/${DATE}
+	\cp -r src     cppcheck/${DATE}
+	cd cppcheck/${DATE} ; cppcheck --language=c++ --std=c++17 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction -I include src/*.cc 2>&1 | tee cppcheck.log
 
 cpplint:
-	mkdir -p cpplint
-	cd cpplint ; wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py
+	mkdir -p cpplint/${DATE}
+	\cp -r include cpplint/${DATE}
+	\cp -r src     cpplint/${DATE}
+	cd cpplint/${DATE} ; cpplint include/*.h src/*.cc 2>&1 | tee cpplint.log
 
 doc:
 	cd doc ; doxygen Doxyfile
