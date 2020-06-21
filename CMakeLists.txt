@@ -27,6 +27,21 @@ if(TIFFWRAP_BUILD_WITH_SANITIZER)
     endif()
 endif()
 
+option(TIFFWRAP_BUILD_WITH_COVINFO "Building tiffwrap with coverage information" OFF)
+if(TIFFWRAP_BUILD_WITH_COVINFO)
+    message(STATUS "Building tiffwrap with coverage information [${CMAKE_CXX_COMPILER_ID}]")
+    set(CMAKE_CXX_FLAGS "--coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "--coverage")
+
+    file(GLOB_RECURSE SRCS ${TIFFWRAP_SRC_DIR}/*)
+    add_custom_target(lcov_html
+        COMMAND lcov --directory . --capture --output-file cov.info --rc lcov_branch_coverage=1
+        COMMAND lcov -e cov.info ${SRCS} --output-file cov.info.filtered --rc lcov_branch_coverage=1
+        COMMAND genhtml --title "tiffwrap" --legend --demangle-cpp --output-directory html -show-details --branch-coverage cov.info.filtered
+        COMMENT "Generating HTML report html/index.html"
+    )
+endif()
+
 option(TIFFWRAP_BUILD_SHARED_LIBS "build tiffwrap as a shared library" ON)
 option(TIFFWRAP_BUILD_UNIT_TESTS "build unit tests of tiffwrap" OFF)
 
@@ -68,7 +83,7 @@ target_compile_options(
     -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers>
     $<$<CONFIG:Release>: -O2>
     $<$<CONFIG:Debug>: -O0 -g3>
-    $<$<CONFIG:RElWithDebgInfo>: -O2 -g3>
+    $<$<CONFIG:RelWithDebInfo>: -O2 -g3>
 )
 
 target_compile_definitions(

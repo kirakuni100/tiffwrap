@@ -23,7 +23,7 @@ clang_analyze:
 
 coverage:
 	mkdir -p build_coverage
-	cd build_coverage ; cmake -C ../cmake/clang-cmakeinit.cmake
+	cd build_coverage ; cmake -C ../cmake/gcc-cmakeinit.cmake -DTIFFWRAP_BUILD_WITH_COVINFO=ON -DTIFFWRAP_BUILD_UNIT_TESTS=ON ..
 	cd build_coverage ; make
 	cd build_coverage ; GTEST_COLOR=1 ctest -j10 -V
 	cd build_coverage ; make lcov_html

@@ -63,7 +63,7 @@ foreach(test ${tests})
         -Wvariadic-macros -Wwrite-strings -Wno-missing-field-initializers>
         $<$<CONFIG:Release>: -O2>
         $<$<CONFIG:Debug>: -O0 -g>
-        $<$<CONFIG:RElWithDebgInfo>: -O2 -g>
+        $<$<CONFIG:RelWithDebInfo>: -O2 -g>
     )
 
     target_compile_definitions(
