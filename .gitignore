@@ -3,4 +3,11 @@ include/tiffwrap_config.h
 
 # others
 build/*
+build_coverage/*
+build_test/*
+clang_tidy/*
+cppcheck/*
+cpplint/*
+
+# sample
 sample/build/*

@@ -1,11 +1,10 @@
-.PHONY: all clean clang_tidy clang_analyze coverage cppcheck cpplint doc test
+.PHONY: all clean clang_tidy coverage cppcheck cpplint doc test
 
 DATE=$(shell date '+%Y%m%d-%H%M%S')
 
 all:
 	@echo "clean - remove built files"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
-	@echo "clang_analyze - analyze code with Clang-Analyzer"
 	@echo "coverage - create coverage information with lcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
@@ -13,13 +12,13 @@ all:
 	@echo "test - compile and execute test suite"
 
 clean:
-	\rm -rf build_coverage build_test cppcheck cpplint
+	\rm -rf build_coverage build_test clang_tidy cppcheck cpplint
 
 clang_tidy:
-	@echo "test"
-
-clang_analyze:
-	@echo "test"
+	mkdir -p clang_tidy/${DATE}
+	\cp -r include clang_tidy/${DATE}
+	\cp -r src     clang_tidy/${DATE}
+	cd clang_tidy/${DATE} ; clang-tidy src/*.cc -checks=-*,clang-analyzer-* -- -Iinclude 2>&1 | tee clang_tidy.log
 
 coverage:
 	mkdir -p build_coverage
