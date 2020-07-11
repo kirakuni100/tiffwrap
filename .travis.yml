@@ -1,0 +1,17 @@
+language: cpp
+
+matrix:
+  include:
+
+  - os: linux
+    compiler: gcc
+    env:
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-9
+
+script:
+  - make test
