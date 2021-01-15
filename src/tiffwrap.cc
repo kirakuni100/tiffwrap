@@ -62,8 +62,7 @@ TiffWrap::TiffWrap() :
     m_comps(0),
     m_color(Color::ERROR),
     m_plane(Plane::PACKED),
-    m_subsampling(YUVSubSampling::YUV444),
-    m_field({ 0, 0, 0, 0, 0, 0, 1, { 1, 1 }, 0 })
+    m_subsampling(YUVSubSampling::YUV444)
 {}
 
 TiffWrap::~TiffWrap()
@@ -79,8 +78,7 @@ TiffWrap::TiffWrap(const TiffWrap &rhs) :
     m_comps(rhs.m_comps),
     m_color(rhs.m_color),
     m_plane(rhs.m_plane),
-    m_subsampling(rhs.m_subsampling),
-    m_field(rhs.m_field)
+    m_subsampling(rhs.m_subsampling)
 {}
 
 TiffWrap &TiffWrap::operator=(const TiffWrap &rhs)
@@ -94,7 +92,6 @@ TiffWrap &TiffWrap::operator=(const TiffWrap &rhs)
         m_color = rhs.m_color;
         m_plane = rhs.m_plane;
         m_subsampling = rhs.m_subsampling;
-        m_field = rhs.m_field;
     }
     return *this;
 }
@@ -107,8 +104,7 @@ TiffWrap::TiffWrap(TiffWrap &&rhs) noexcept :
     m_comps(rhs.m_comps),
     m_color(rhs.m_color),
     m_plane(rhs.m_plane),
-    m_subsampling(rhs.m_subsampling),
-    m_field(rhs.m_field)
+    m_subsampling(rhs.m_subsampling)
 {
     this->close();
     m_tiff = rhs.m_tiff;
@@ -129,7 +125,6 @@ TiffWrap &TiffWrap::operator=(TiffWrap &&rhs) noexcept
         m_color = rhs.m_color;
         m_plane = rhs.m_plane;
         m_subsampling = rhs.m_subsampling;
-        m_field = rhs.m_field;
     }
     return *this;
 }
@@ -165,49 +160,69 @@ int TiffWrap::set_tags()
     auto ret = check_params();
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_SUBFILETYPE, m_field.subfiletype)) {
+        auto image_width = m_xsize;
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_IMAGEWIDTH, image_width)) {
             ret = -1;
         }
     }
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_IMAGEWIDTH, m_field.image_width)) {
+        auto image_length = m_ysize;
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_IMAGELENGTH, image_length)) {
             ret = -1;
         }
     }
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_IMAGELENGTH, m_field.image_length)) {
+        auto bits_per_sample = m_depth;
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_BITSPERSAMPLE, bits_per_sample)) {
             ret = -1;
         }
     }
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_BITSPERSAMPLE, m_field.bits_per_sample)) {
+        auto samples_per_pixel = m_comps;
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_SAMPLESPERPIXEL, samples_per_pixel)) {
             ret = -1;
         }
     }
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_SAMPLESPERPIXEL, m_field.samples_per_pixel)) {
+        auto photometric =
+            (m_color == Color::MONO) ? PHOTOMETRIC_MINISBLACK :
+            (m_color == Color::RGB)  ? PHOTOMETRIC_RGB        :
+            (m_color == Color::CMYK) ? PHOTOMETRIC_SEPARATED  :
+            (m_color == Color::YUV)  ? PHOTOMETRIC_YCBCR      : 0;
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_PHOTOMETRIC, photometric)) {
             ret = -1;
         }
     }
 
     if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_PHOTOMETRIC, m_field.photometric)) {
-            ret = -1;
-        }
-    }
+        auto planar_config =
+            (m_plane == Plane::PACKED) ? PLANARCONFIG_CONTIG   :
+            (m_plane == Plane::PLANAR) ? PLANARCONFIG_SEPARATE : 0;
 
-    if (ret == 0) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_PLANARCONFIG, m_field.planar_config)) {
+        if (!TIFFSetField(m_tiff, TIFFTAG_PLANARCONFIG, planar_config)) {
             ret = -1;
         }
     }
 
     if (ret == 0 && m_color == Color::YUV) {
-        if (!TIFFSetField(m_tiff, TIFFTAG_YCBCRSUBSAMPLING, m_field.subsampling[0], m_field.subsampling[1])) {
+        uint16_t subsampling[2] = { get_chroma_sampling_xfactor(), get_chroma_sampling_yfactor() };
+
+        if (!TIFFSetField(m_tiff, TIFFTAG_YCBCRSUBSAMPLING, subsampling[0], subsampling[1])) {
+            ret = -1;
+        }
+    }
+
+    if (ret == 0 && m_ftype == Ftype::MULTI) {
+        if (!TIFFSetField(m_tiff, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE)) {
             ret = -1;
         }
     }
@@ -237,26 +252,17 @@ int TiffWrap::set_tags()
     }
 
     if (ret == 0) {
-        char buf[20] = { 0 };
-        auto now = std::chrono::system_clock::now();
-        auto tm = std::chrono::system_clock::to_time_t(now);
-        std::strftime(buf, sizeof(buf), "%Y:%m:%d %H:%M:%S", std::localtime(&tm));
+        auto rows_per_strip = 0;
 
-        if (!TIFFSetField(m_tiff, TIFFTAG_DATETIME, buf)) {
-            ret = -1;
-        }
-    }
-
-    if (ret == 0) {
         if (m_subsampling == YUVSubSampling::YUV420) {
-            m_field.rows_per_strip = 16;
+            rows_per_strip = 16;
         } else if (m_subsampling == YUVSubSampling::YUV410) {
-            m_field.rows_per_strip = 32;
+            rows_per_strip = 32;
         } else {
-            m_field.rows_per_strip = TIFFDefaultStripSize(m_tiff, 0);
+            rows_per_strip = TIFFDefaultStripSize(m_tiff, 0);
         }
 
-        if (!TIFFSetField(m_tiff, TIFFTAG_ROWSPERSTRIP, m_field.rows_per_strip)) {
+        if (!TIFFSetField(m_tiff, TIFFTAG_ROWSPERSTRIP, rows_per_strip)) {
             ret = -1;
         }
     }
@@ -269,84 +275,97 @@ int TiffWrap::get_tags()
     auto ret = m_tiff == nullptr ? -1 : 0;
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_SUBFILETYPE, &(m_field.subfiletype))) {
-            m_field.subfiletype = 0;
+        auto image_width = -1;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_IMAGEWIDTH, &image_width)) {
+            ret = -1;
         }
-        m_ftype = m_field.subfiletype == 0             ? Ftype::SINGLE :
-                  m_field.subfiletype == FILETYPE_PAGE ? Ftype::MULTI  :
-                                                         Ftype::ERROR  ;
+
+        m_xsize = image_width;
     }
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_IMAGEWIDTH, &(m_field.image_width))) {
+        auto image_length = -1;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_IMAGELENGTH, &image_length)) {
             ret = -1;
         }
-        m_xsize = m_field.image_width;
+
+        m_ysize = image_length;
     }
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_IMAGELENGTH, &(m_field.image_length))) {
+        uint16_t bits_per_sample = 0;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_BITSPERSAMPLE, &bits_per_sample)) {
             ret = -1;
         }
-        m_ysize = m_field.image_length;
+
+        m_depth = bits_per_sample;
     }
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_BITSPERSAMPLE, &(m_field.bits_per_sample))) {
+        uint16_t samples_per_pixel = 0;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel)) {
             ret = -1;
         }
-        m_depth = m_field.bits_per_sample;
+
+        m_comps = samples_per_pixel;
     }
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_SAMPLESPERPIXEL, &(m_field.samples_per_pixel))) {
+        auto photometric = -1;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_PHOTOMETRIC, &photometric)) {
             ret = -1;
         }
-        m_comps = m_field.samples_per_pixel;
+
+        m_color = photometric == PHOTOMETRIC_MINISBLACK ? Color::MONO :
+                  photometric == PHOTOMETRIC_RGB        ? Color::RGB  :
+                  photometric == PHOTOMETRIC_SEPARATED  ? Color::CMYK :
+                  photometric == PHOTOMETRIC_YCBCR      ? Color::YUV  :
+                                                          Color::ERROR;
     }
 
     if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_PHOTOMETRIC, &(m_field.photometric))) {
-            ret = -1;
-        }
-        m_color = m_field.photometric == PHOTOMETRIC_MINISBLACK ? Color::MONO :
-                  m_field.photometric == PHOTOMETRIC_RGB        ? Color::RGB  :
-                  m_field.photometric == PHOTOMETRIC_SEPARATED  ? Color::CMYK :
-                  m_field.photometric == PHOTOMETRIC_YCBCR      ? Color::YUV  :
-                                                                  Color::ERROR;
-    }
+        auto planar_config = -1;
 
-    if (ret == 0) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_PLANARCONFIG, &(m_field.planar_config))) {
+        if (!TIFFGetField(m_tiff, TIFFTAG_PLANARCONFIG, &planar_config)) {
             ret = -1;
         }
-        m_plane = m_field.planar_config == PLANARCONFIG_CONTIG   ? Plane::PACKED :
-                  m_field.planar_config == PLANARCONFIG_SEPARATE ? Plane::PLANAR :
-                                                                   Plane::ERROR  ;
+
+        m_plane = planar_config == PLANARCONFIG_CONTIG   ? Plane::PACKED :
+                  planar_config == PLANARCONFIG_SEPARATE ? Plane::PLANAR :
+                                                           Plane::ERROR  ;
     }
 
     if (ret == 0 && m_color == Color::YUV) {
-        if (!TIFFGetField(m_tiff, TIFFTAG_YCBCRSUBSAMPLING, &(m_field.subsampling[0]), &(m_field.subsampling[1]))) {
+        uint16_t subsampling[2] = { 0 };
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_YCBCRSUBSAMPLING, &subsampling[0], &subsampling[1])) {
             ret = -1;
         }
-        m_subsampling = m_field.subsampling[0] == 1 &&
-                        m_field.subsampling[1] == 1 ? YUVSubSampling::YUV444 :
-                        m_field.subsampling[0] == 2 &&
-                        m_field.subsampling[1] == 1 ? YUVSubSampling::YUV422 :
-                        m_field.subsampling[0] == 2 &&
-                        m_field.subsampling[1] == 2 ? YUVSubSampling::YUV420 :
-                        m_field.subsampling[0] == 4 &&
-                        m_field.subsampling[1] == 1 ? YUVSubSampling::YUV411 :
-                        m_field.subsampling[0] == 4 &&
-                        m_field.subsampling[1] == 4 ? YUVSubSampling::YUV410 :
-                                                      YUVSubSampling::ERROR  ;
-    }
 
-    if (!TIFFGetField(m_tiff, TIFFTAG_ROWSPERSTRIP, &(m_field.rows_per_strip))) {
-        ret = -1;
+        m_subsampling = subsampling[0] == 1 && subsampling[1] == 1 ? YUVSubSampling::YUV444 :
+                        subsampling[0] == 2 && subsampling[1] == 1 ? YUVSubSampling::YUV422 :
+                        subsampling[0] == 2 && subsampling[1] == 2 ? YUVSubSampling::YUV420 :
+                        subsampling[0] == 4 && subsampling[1] == 1 ? YUVSubSampling::YUV411 :
+                        subsampling[0] == 4 && subsampling[1] == 4 ? YUVSubSampling::YUV410 :
+                        YUVSubSampling::ERROR  ;
     }
 
     if (ret == 0) {
+        auto subfiletype = 0;
+
+        if (!TIFFGetField(m_tiff, TIFFTAG_SUBFILETYPE, &subfiletype)) {
+            subfiletype = 0;
+        }
+
+        m_ftype = subfiletype == 0             ? Ftype::SINGLE :
+                  subfiletype == FILETYPE_PAGE ? Ftype::MULTI  :
+                                                 Ftype::ERROR  ;
+
         ret = check_params();
     }
 
@@ -354,128 +373,22 @@ int TiffWrap::get_tags()
 }
 
 template<typename T>
-int TiffWrap::write(T *p_data, uint16_t comp)
+int TiffWrap::write_data(T *p_data, uint16_t comp)
 {
-    auto ret = m_tiff == nullptr ? -1 : 0;
-    auto rows_per_strip = 0u;
-
-    if (ret == 0) {
-        if (!TIFFGetFieldDefaulted(m_tiff, TIFFTAG_ROWSPERSTRIP, &rows_per_strip)) {
-            ret = -1;
-        }
-    }
-
-    if (ret == 0) {
-        if (m_plane == Plane::PACKED) {
-            const auto xfactor = m_field.subsampling[0];
-            const auto yfactor = m_field.subsampling[1];
-            const auto xsize = (m_xsize + xfactor - 1) / xfactor * xfactor;
-            const auto ysize = (m_ysize + yfactor - 1) / yfactor * yfactor;
-
-            for (auto y = 0u, strip = 0u; y < ysize; y += rows_per_strip, ++strip) {
-                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
-                const auto chroma_xsize = xsize / xfactor;
-                const auto chroma_ysize = nrows / yfactor;
-                const auto ssize = m_color == Color::YUV ?
-                                nrows * xsize + chroma_ysize * chroma_xsize * 2:
-                                nrows * xsize * m_comps;
-
-                tmsize_t rsize = 0;
-                if ((rsize = TIFFWriteEncodedStrip(m_tiff, strip, p_data, ssize)) < 0) {
-                    ret = -1;
-                    break;
-                }
-                ret += static_cast<int>(rsize);
-                p_data += static_cast<size_t>(rsize) / sizeof(T);
-            }
-        } else {
-            const auto xsize = m_xsize;
-            const auto ysize = m_ysize;
-            const auto strips_per_comp = TIFFNumberOfStrips(m_tiff) / m_comps;
-
-            for (auto y = 0u, st = 0u; y < ysize; y += rows_per_strip, ++st) {
-                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
-                const auto ssize = nrows * xsize;
-                const auto strip = strips_per_comp * comp + st;
-
-                tmsize_t rsize = 0;
-                if ((rsize = TIFFWriteEncodedStrip(m_tiff, strip, p_data, ssize)) < 0) {
-                    ret = -1;
-                    break;
-                }
-                ret += static_cast<int>(rsize);
-                p_data += static_cast<size_t>(rsize) / sizeof(T);
-            }
-        }
-    }
-
-    return ret;
+    return rw_data<T>(p_data, TIFFWriteEncodedStrip, comp);
 }
 
-template int TiffWrap::write<uint8_t>(uint8_t *p_data, uint16_t comp);
-template int TiffWrap::write<uint16_t>(uint16_t *p_data, uint16_t comp);
+template int TiffWrap::write_data<uint8_t>(uint8_t *p_data, uint16_t comp);
+template int TiffWrap::write_data<uint16_t>(uint16_t *p_data, uint16_t comp);
 
 template<typename T>
-int TiffWrap::read(T *p_data, uint16_t comp)
+int TiffWrap::read_data(T *p_data, uint16_t comp)
 {
-    auto ret = m_tiff == nullptr ? -1 : 0;
-    auto rows_per_strip = 0u;
-
-    if (ret == 0) {
-        if (!TIFFGetFieldDefaulted(m_tiff, TIFFTAG_ROWSPERSTRIP, &rows_per_strip)) {
-            ret = -1;
-        }
-    }
-
-    if (ret == 0) {
-        if (m_plane == Plane::PACKED) {
-            const auto xfactor = m_field.subsampling[0];
-            const auto yfactor = m_field.subsampling[1];
-            const auto xsize = (m_xsize + xfactor - 1) / xfactor * xfactor;
-            const auto ysize = (m_ysize + yfactor - 1) / yfactor * yfactor;
-
-            for (auto y = 0u, strip = 0u; y < ysize; y += rows_per_strip, ++strip) {
-                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
-                const auto chroma_xsize = xsize / xfactor;
-                const auto chroma_ysize = nrows / yfactor;
-                const auto ssize = m_color == Color::YUV ?
-                                nrows * xsize + chroma_ysize * chroma_xsize * 2:
-                                nrows * xsize * m_comps;
-
-                tmsize_t rsize = 0;
-                if ((rsize = TIFFReadEncodedStrip(m_tiff, strip, p_data, ssize)) < 0) {
-                    ret = -1;
-                    break;
-                }
-                ret += static_cast<int>(rsize);
-                p_data += static_cast<size_t>(rsize) / sizeof(T);
-            }
-        } else {
-            const auto xsize = m_xsize;
-            const auto ysize = m_ysize;
-            const auto strips_per_comp = TIFFNumberOfStrips(m_tiff) / m_comps;
-
-            for (auto y = 0u, st = 0u; y < ysize; y += rows_per_strip, ++st) {
-                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
-                const auto ssize = nrows * xsize;
-                const auto strip = strips_per_comp * comp + st;
-
-                tmsize_t rsize = 0;
-                if ((rsize = TIFFReadEncodedStrip(m_tiff, strip, p_data, ssize)) < 0) {
-                    ret = -1;
-                    break;
-                }
-                ret += static_cast<int>(rsize);
-                p_data += static_cast<size_t>(rsize) / sizeof(T);
-            }
-        }
-    }
-
-    return ret;
+    return rw_data<T>(p_data, TIFFReadEncodedStrip, comp);
 }
 
-template int TiffWrap::read<uint8_t>(uint8_t *p_data, uint16_t comp);
-template int TiffWrap::read<uint16_t>(uint16_t *p_data, uint16_t comp);
+template int TiffWrap::read_data<uint8_t>(uint8_t *p_data, uint16_t comp);
+template int TiffWrap::read_data<uint16_t>(uint16_t *p_data, uint16_t comp);
 
 int TiffWrap::check_params()
 {
@@ -507,6 +420,68 @@ int TiffWrap::check_params()
 
     if (ret == 0 && m_color == Color::YUV) {
         ret = m_subsampling == YUVSubSampling::ERROR ? -1 : 0;
+    }
+
+    return ret;
+}
+
+template<typename T>
+int TiffWrap::rw_data(
+    T *p_data,
+    std::function<tmsize_t(TIFF*, uint32, void*, tmsize_t)> func,
+    uint16_t comp)
+{
+    auto ret = m_tiff == nullptr ? -1 : 0;
+    auto rows_per_strip = 0u;
+
+    if (ret == 0) {
+        if (!TIFFGetFieldDefaulted(m_tiff, TIFFTAG_ROWSPERSTRIP, &rows_per_strip)) {
+            ret = -1;
+        }
+    }
+
+    if (ret == 0) {
+        if (m_plane == Plane::PACKED) {
+            const auto xfactor = get_chroma_sampling_xfactor();
+            const auto yfactor = get_chroma_sampling_yfactor();
+            const auto xsize = (m_xsize + xfactor - 1) / xfactor * xfactor;
+            const auto ysize = (m_ysize + yfactor - 1) / yfactor * yfactor;
+
+            for (auto y = 0u, strip = 0u; y < ysize; y += rows_per_strip, ++strip) {
+                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
+                const auto chroma_xsize = xsize / xfactor;
+                const auto chroma_ysize = nrows / yfactor;
+                const auto ssize = m_color == Color::YUV ?
+                                nrows * xsize + chroma_ysize * chroma_xsize * 2:
+                                nrows * xsize * m_comps;
+
+                tmsize_t rsize = 0;
+                if ((rsize = func(m_tiff, strip, p_data, ssize)) < 0) {
+                    ret = -1;
+                    break;
+                }
+                ret += static_cast<int>(rsize);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
+            }
+        } else {
+            const auto xsize = m_xsize;
+            const auto ysize = m_ysize;
+            const auto strips_per_comp = TIFFNumberOfStrips(m_tiff) / m_comps;
+
+            for (auto y = 0u, st = 0u; y < ysize; y += rows_per_strip, ++st) {
+                const auto nrows = y + rows_per_strip > ysize ? ysize - y : rows_per_strip;
+                const auto ssize = nrows * xsize;
+                const auto strip = strips_per_comp * comp + st;
+
+                tmsize_t rsize = 0;
+                if ((rsize = func(m_tiff, strip, p_data, ssize)) < 0) {
+                    ret = -1;
+                    break;
+                }
+                ret += static_cast<int>(rsize);
+                p_data += static_cast<size_t>(rsize) / sizeof(T);
+            }
+        }
     }
 
     return ret;

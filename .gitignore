@@ -8,6 +8,8 @@ build_test/*
 clang_tidy/*
 cppcheck/*
 cpplint/*
+flawfinder/*
+pmd_cpd/*
 
 # sample
 sample/build/*

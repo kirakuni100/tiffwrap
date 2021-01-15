@@ -27,7 +27,7 @@ int main()
         }
     }
 
-    tif.write(image.data());
+    tif.write_data(image.data());
     tif.close();
 
     return 0;
