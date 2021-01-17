@@ -252,7 +252,7 @@ int TiffWrap::set_tags()
     }
 
     if (ret == 0) {
-        auto rows_per_strip = 0;
+        auto rows_per_strip = 0u;
 
         if (m_subsampling == YUVSubSampling::YUV420) {
             rows_per_strip = 16;
@@ -275,7 +275,7 @@ int TiffWrap::get_tags()
     auto ret = m_tiff == nullptr ? -1 : 0;
 
     if (ret == 0) {
-        auto image_width = -1;
+        auto image_width = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_IMAGEWIDTH, &image_width)) {
             ret = -1;
@@ -285,7 +285,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        auto image_length = -1;
+        auto image_length = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_IMAGELENGTH, &image_length)) {
             ret = -1;
@@ -295,7 +295,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        uint16_t bits_per_sample = 0;
+        uint16_t bits_per_sample = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_BITSPERSAMPLE, &bits_per_sample)) {
             ret = -1;
@@ -305,7 +305,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        uint16_t samples_per_pixel = 0;
+        uint16_t samples_per_pixel = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel)) {
             ret = -1;
@@ -315,7 +315,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        auto photometric = -1;
+        uint16_t photometric = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_PHOTOMETRIC, &photometric)) {
             ret = -1;
@@ -329,7 +329,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        auto planar_config = -1;
+        uint16_t planar_config = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_PLANARCONFIG, &planar_config)) {
             ret = -1;
@@ -341,7 +341,7 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0 && m_color == Color::YUV) {
-        uint16_t subsampling[2] = { 0 };
+        uint16_t subsampling[2] = { 0u };
 
         if (!TIFFGetField(m_tiff, TIFFTAG_YCBCRSUBSAMPLING, &subsampling[0], &subsampling[1])) {
             ret = -1;
@@ -356,13 +356,13 @@ int TiffWrap::get_tags()
     }
 
     if (ret == 0) {
-        auto subfiletype = 0;
+        uint16_t subfiletype = 0u;
 
         if (!TIFFGetField(m_tiff, TIFFTAG_SUBFILETYPE, &subfiletype)) {
-            subfiletype = 0;
+            subfiletype = 0u;
         }
 
-        m_ftype = subfiletype == 0             ? Ftype::SINGLE :
+        m_ftype = subfiletype == 0u            ? Ftype::SINGLE :
                   subfiletype == FILETYPE_PAGE ? Ftype::MULTI  :
                                                  Ftype::ERROR  ;
 

@@ -71,6 +71,7 @@ target_compile_options(
     tiffwrap PRIVATE
     $<$<CXX_COMPILER_ID:Clang>:
     -Werror -Wall -Weverything
+    -Wno-padded
     -Wno-c++98-compat -Wno-c++98-compat-pedantic>
     $<$<CXX_COMPILER_ID:GNU>:
     -Werror -Wall -Wextra -pedantic

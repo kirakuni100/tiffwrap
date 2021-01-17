@@ -22,56 +22,12 @@
  * SOFTWARE.
  */
 
-#include <iostream>
-#include <random>
-#include "gtest/gtest.h"
+#include "tiffwrap.h"
+#include "tiffwrap_test.h"
 
-namespace tiffwrap {
+TEST(ConstructorTest, ConstructorTest_0) {
+    tiffwrap::TiffWrap tif;
 
-namespace unittest {
-
-class TiffWrapTestEnvironment : public ::testing::Environment {
- public:
-    explicit TiffWrapTestEnvironment(int seed)
-    {
-        m_mt.seed(m_seed = seed);
-    }
-
-    explicit TiffWrapTestEnvironment()
-    {
-        std::random_device rnd;
-        m_mt.seed(m_seed = rnd());
-    }
-
-    virtual ~TiffWrapTestEnvironment() {}
-
-    virtual void SetUp()
-    {
-        std::cout << "tiffwrap test seed: " << m_seed << std::endl;
-    }
-
-    virtual void TearDown()
-    {
-        ;
-    }
-
- private:
-    static int m_seed;
-    static std::mt19937 m_mt;
-};
-
-int TiffWrapTestEnvironment::m_seed = 0;
-std::mt19937 TiffWrapTestEnvironment::m_mt(0);
-
-}  // namespace unittest
-
-}  // namespace tiffwrap
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(
-        new tiffwrap::unittest::TiffWrapTestEnvironment(1));
-    return RUN_ALL_TESTS();
+    EXPECT_EQ(tif.get_xsize(), 0);
 }
 

@@ -1,20 +1,19 @@
 cmake_minimum_required(VERSION 3.8)
 
+set(TIFFWRAP_TEST_DIR ${PROJECT_SOURCE_DIR}/test)
+
 include(cmake/gtest.cmake.in)
 
 find_package(TIFF REQUIRED)
 
-set(TIFFWRAP_TEST_DIR ${PROJECT_SOURCE_DIR}/test)
-
 set(tests
-    ${TIFFWRAP_TEST_DIR}/src/sample_test.cc
-    ${TIFFWRAP_TEST_DIR}/src/test_constructor.cc
+    ${TIFFWRAP_TEST_DIR}/src/test_tiffwrap.cc
 )
 
 option(TIFFWRAP_TEST_WITH_VALGRIND "Execute test suite with Valgrind" OFF)
 if(TIFFWRAP_TEST_WITH_VALGRIND)
     find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
-    message(STATUS "Executing test suite with Valgrind")
+    message(STATUS "Execute test suite with Valgrind")
     set(MEMCHECK_COMMAND "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
     separate_arguments(MEMCHECK_COMMAND)
 endif()
@@ -51,6 +50,7 @@ foreach(test ${tests})
         ${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:Clang>:
         -Wall -Weverything
+        -Wno-padded -Wno-global-constructors
         -Wno-c++98-compat -Wno-c++98-compat-pedantic>
         $<$<CXX_COMPILER_ID:GNU>:
         -Wall -Wextra -pedantic
