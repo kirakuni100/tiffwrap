@@ -1,17 +1,186 @@
 language: cpp
+dist: bionic
+sudo: false
 
 matrix:
   include:
 
+  # codecov
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - lcov
+    script:
+      - make build_coverage
+    after_success:
+      - cd build_coverage
+      - bash <(curl -s https://codecov.io/bash) -f cov.info.filtered
+
+  # build on linux / gcc
   - os: linux
     compiler: gcc
     env:
+      - COMPILER=g++-4.8
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-4.8
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-5
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-5
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-6
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-6
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-7
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-8
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-9
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
         packages:
           - g++-9
+    script:
+      - make COMPILER=${COMPILER} build
 
-script:
-  - make test
+  # build on linux / clang
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-5.0
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-5.0
+        packages:
+          - clang-5.0
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-6.0
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-6.0
+        packages:
+          - clang-6.0
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-7
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-7
+        packages:
+          - clang-7
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-8
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-8
+        packages:
+          - clang-8
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-9
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-9
+        packages:
+          - clang-9
+    script:
+      - make COMPILER=${COMPILER} build
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-10
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-bionic-10
+        packages:
+          - clang-10
+    script:
+      - make COMPILER=${COMPILER} build
+

@@ -37,6 +37,7 @@ if(TIFFWRAP_BUILD_WITH_COVINFO)
     add_custom_target(lcov_html
         COMMAND lcov --directory . --capture --output-file cov.info --rc lcov_branch_coverage=1
         COMMAND lcov -e cov.info ${SRCS} --output-file cov.info.filtered --rc lcov_branch_coverage=1
+        COMMAND lcov --list cov.info.filtered
         COMMAND genhtml --title "tiffwrap" --legend --demangle-cpp --output-directory html -show-details --branch-coverage cov.info.filtered
         COMMENT "Generating HTML report html/index.html"
     )
