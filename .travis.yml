@@ -20,6 +20,77 @@ matrix:
       - cd build_coverage
       - bash <(curl -s https://codecov.io/bash) -f cov.info.filtered
 
+  # clang-tidy
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - clang-tidy
+    before_script:
+      - make file
+    script:
+      - make clang-tidy
+
+  # cppcheck
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - cppcheck
+    before_script:
+      - make file
+    script:
+      - make cppcheck
+
+  # cpplint
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+    before_script:
+      - pip install cpplint
+      - make file
+    script:
+      - make cpplint
+
+  # flawfinder
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - flawfinder
+    before_script:
+      - make file
+    script:
+      - make flawfinder
+
+  # pmd-cpd
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - openjdk-8-jre
+    before_script:
+      - wget https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.31.0/pmd-bin-6.31.0.zip
+      - unzip pmd-bin-6.31.0.zip
+      - make file
+    script:
+      - make PMD=../../pmd-bin-6.31.0/bin/run.sh pmd-cpd
+
   # build on linux / gcc
   - os: linux
     compiler: gcc

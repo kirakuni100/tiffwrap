@@ -10,10 +10,11 @@ all:
 	@echo "build_coverage - create coverage information with lcov"
 	@echo "build_test - build and execute test suite"
 	@echo "clean - remove built files"
-	@echo "clang_tidy - analyze code with Clang-Tidy"
+	@echo "clang-tidy - analyze code with clang-tidy"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
 	@echo "doc  - execute doxygen"
+	@echo "file - create config files"
 	@echo "flawfinder - analyze code with flawfinder"
 	@echo "pmd-cpd - analyze code with pmd-cpd"
 
@@ -82,19 +83,23 @@ build_test:
 	cd build_test ; GTEST_COLOR=1 ctest -j10 -V
 
 clean:
-	\rm -rf build build_gcc build_clang build_coverage build_test clang_tidy cppcheck cpplint flawfinder pmd_cpd
+	\rm -rf build build_gcc build_clang build_coverage build_test clang-tidy cppcheck cpplint flawfinder pmd-cpd
 
-clang_tidy:
-	mkdir -p clang_tidy/${DATE}
-	\cp -r include clang_tidy/${DATE}
-	\cp -r src     clang_tidy/${DATE}
-	cd clang_tidy/${DATE} ; clang-tidy src/*.cc -checks=-*,clang-analyzer-* -- -Iinclude 2>&1 | tee clang_tidy.log
+clang-tidy:
+	mkdir -p clang-tidy/${DATE}
+	\cp -r include clang-tidy/${DATE}
+	\cp -r src     clang-tidy/${DATE}
+	cd clang-tidy/${DATE} ; clang-tidy src/*.cc -checks=-*,clang-analyzer-* -- -Iinclude 2>&1 | tee clang-tidy.log
+
+file:
+	mkdir -p build
+	cd build ; cmake ..
 
 cppcheck:
 	mkdir -p cppcheck/${DATE}
 	\cp -r include cppcheck/${DATE}
 	\cp -r src     cppcheck/${DATE}
-	cd cppcheck/${DATE} ; cppcheck --language=c++ --std=c++17 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction -I include src/*.cc 2>&1 | tee cppcheck.log
+	cd cppcheck/${DATE} ; cppcheck --language=c++ --std=c++11 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction -I include src/*.cc 2>&1 | tee cppcheck.log
 
 cpplint:
 	mkdir -p cpplint/${DATE}
@@ -115,11 +120,11 @@ pmd-cpd:
 ifeq ($(PMD),"")
 	@echo "make PMD=<path to pmd> pmd-cpd"
 else
-	mkdir -p pmd_cpd/${DATE}
-	\cp -r include pmd_cpd/${DATE}
-	\cp -r src     pmd_cpd/${DATE}
-	cd pmd_cpd/${DATE} ; $(PMD) cpd --minimum-tokens 100 --language cpp --files include/*.h src/*.cc 2>&1 | tee pmd_cpd.log
+	mkdir -p pmd-cpd/${DATE}
+	\cp -r include pmd-cpd/${DATE}
+	\cp -r src     pmd-cpd/${DATE}
+	cd pmd-cpd/${DATE} ; $(PMD) cpd --minimum-tokens 100 --language cpp --files include/*.h src/*.cc 2>&1 | tee pmd-cpd.log
 endif
 
-.PHONY: all build build_gcc build_clang build_coverage build_test clean clang_tidy cppcheck cpplint doc flawfinder
+.PHONY: all build build_gcc build_clang build_coverage build_test clean clang-tidy cppcheck cpplint doc file flawfinder pmd-cpd
 
